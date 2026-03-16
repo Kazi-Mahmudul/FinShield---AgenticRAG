@@ -1,0 +1,39 @@
+# --- OS / IDE Specific ---
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.log
+
+# --- Python Environment ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+.venv
+.python-version
+
+# --- Project Data & Secrets ---
+# Ignore the actual data files to keep the repo lightweight
+# You can still share your scripts to generate them
+*.csv
+*.json
+!data_schema.json  # Example: Keep schema but ignore data
+
+# --- Secret Keys (CRITICAL) ---
+.env
+credentials.txt
+*-credentials.json
+
+# --- AI & Agent Specific ---
+.langgraph_api/
+.mypy_cache/
+.pytest_cache/
+.cache/
+
+# --- Build & Distribution ---
+dist/
+build/
+*.egg-info/

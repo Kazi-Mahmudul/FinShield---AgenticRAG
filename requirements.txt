@@ -1,0 +1,39 @@
+# --- Core Orchestration & AI Framework ---
+langchain
+langchain-core
+langchain-community
+langgraph
+mistralai
+langchain-mistralai
+
+# --- Vector & NLP (BGE-M3 Multilingual) ---
+sentence-transformers
+FlagEmbedding
+torch
+numpy
+
+# --- Data Tiers (SQL & Graph) ---
+supabase
+psycopg2-binary
+neo4j
+upstash-redis
+
+# --- Backend & API ---
+fastapi
+uvicorn
+python
+python-multipart
+pydantic
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+
+# --- Evaluation & Analysis ---
+ragas
+pandas
+datasets
+
+# --- Utilities & Data Generation ---
+faker
+uuid
