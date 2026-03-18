@@ -9,7 +9,7 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
 # Import tools from your previous tools.py file
-from tools import query_transaction_history, check_fraud_patterns
+from tools import query_transaction_history, check_fraud_patterns, query_banking_policies
 
 load_dotenv(find_dotenv())
 
@@ -59,72 +59,41 @@ Note: Always use 'TRANSFERRED' for Peer-to-Peer (P2P) and 'PAID' for Merchant tr
 Professional, objective, and analytical. Avoid conversational "fluff." Focus on data-driven insights.
 """
 
-# 2. Define the Agent State
 class AgentState(TypedDict):
-    # This list will store the whole conversation
     messages: Annotated[list[BaseMessage], add_messages]
 
-# 3. Initialize the Brain
-# Using mistral-large-latest as it is best at following complex instructions
+# Initialize Brain
 llm = ChatMistralAI(model="mistral-large-latest", temperature=0)
-tools = [query_transaction_history, check_fraud_patterns]
+tools = [query_transaction_history, check_fraud_patterns, query_banking_policies]
 llm_with_tools = llm.bind_tools(tools)
 
-# 4. Node: The Assistant
 def assistant(state: AgentState):
     print("\n🧠 FinShield is reasoning...")
-    
-    # We inject the SystemMessage at the start of every "thought" 
-    # so the agent never forgets its rules.
     messages = [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
-    
     response = llm_with_tools.invoke(messages)
     return {"messages": [response]}
 
-# 5. Build the Workflow Graph
+# Graph setup
 workflow = StateGraph(AgentState)
-
-# Define the two main nodes
 workflow.add_node("assistant", assistant)
 workflow.add_node("tools", ToolNode(tools))
-
-# Entry point
 workflow.set_entry_point("assistant")
-
-# Logic: After assistant, should we go to tools or end?
-workflow.add_conditional_edges(
-    "assistant",
-    tools_condition, # This checks if the LLM called a tool
-)
-
-# Logic: After tools are used, always return to assistant to summarize
+workflow.add_conditional_edges("assistant", tools_condition)
 workflow.add_edge("tools", "assistant")
-
-# Compile
 app = workflow.compile()
 
-# 6. Interaction Loop
 if __name__ == "__main__":
-    print("🛡️ FinShield System Online.")
-    print("(Type 'exit' to stop)")
-    
-    # We keep a simple list of messages to maintain conversation memory
+    print("🛡️ FinShield System Online (SQL + Graph + Multilingual RAG).")
     thread = {"messages": []}
     
     while True:
         user_input = input("\nYou: ")
-        if user_input.lower() in ["exit", "quit"]:
-            break
+        if user_input.lower() in ["exit", "quit"]: break
             
         thread["messages"].append(HumanMessage(content=user_input))
-        
-        # Stream the graph execution
         for event in app.stream(thread, stream_mode="values"):
-            # We look for the last message in the state to print the output
             if "messages" in event:
                 last_msg = event["messages"][-1]
-                # Only print if it's an AI message and has actual text (not tool calls)
                 if isinstance(last_msg, BaseMessage) and last_msg.type == "ai" and last_msg.content:
-                    # Update our local thread memory so the agent stays 'smart'
                     thread["messages"] = event["messages"]
                     print(f"\nFinShield: {last_msg.content}")
