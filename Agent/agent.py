@@ -8,8 +8,11 @@ from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
-# Import tools from your previous tools.py file
-from tools import query_transaction_history, check_fraud_patterns, query_banking_policies
+# Import tools in a way that works for both script and package execution.
+try:
+    from Agent.tools import query_transaction_history, check_fraud_patterns, query_banking_policies
+except ModuleNotFoundError:
+    from tools import query_transaction_history, check_fraud_patterns, query_banking_policies
 
 load_dotenv(find_dotenv())
 
