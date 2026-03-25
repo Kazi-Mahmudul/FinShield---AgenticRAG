@@ -3,7 +3,7 @@ import time
 from collections import defaultdict, deque
 from threading import Lock
 from typing import Deque
-from fastapi import FastAPI, Depends, HTTPException, status, Response, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Response, Request, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -157,6 +157,22 @@ def decode_bearer_token(token: str) -> dict:
         )
 
 
+def save_chat_message(user_id: str, role: str, content: str) -> None:
+    try:
+        supabase.table("chat_history").insert(
+            {
+                "user_id": user_id,
+                "role": role,
+                "content": content,
+            }
+        ).execute()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to persist chat history: {str(exc)}",
+        ) from exc
+
+
 @app.get("/")
 async def root():
     return {
@@ -235,6 +251,9 @@ async def chat_with_agent(body: schemas.ChatRequest, token: str = Depends(oauth2
     payload = decode_bearer_token(token)
     user_id: str = payload["user_id"]
 
+    # Persist user message first so each turn is stored by user_id.
+    save_chat_message(user_id=user_id, role="user", content=body.message)
+
     prompt = f"Authenticated user_id: {user_id}. User query: {body.message}"
     inputs = {"messages": [HumanMessage(content=prompt)]}
 
@@ -268,7 +287,46 @@ async def chat_with_agent(body: schemas.ChatRequest, token: str = Depends(oauth2
     if not final_reply:
         raise AgentExecutionError("Agent returned an empty response")
 
+    save_chat_message(user_id=user_id, role="assistant", content=final_reply)
+
     return {"reply": final_reply, "user_id": user_id}
+
+
+@app.get("/chat/history", response_model=schemas.ChatHistoryResponse)
+async def get_chat_history(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    token: str = Depends(oauth2_scheme),
+):
+    payload = decode_bearer_token(token)
+    user_id: str = payload["user_id"]
+
+    try:
+        history_query = (
+            supabase.table("chat_history")
+            .select("id,role,content,created_at", count="exact")
+            .eq("user_id", user_id)
+            .order("created_at", desc=False)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch chat history: {str(exc)}",
+        ) from exc
+
+    items = history_query.data or []
+    total = int(history_query.count or 0)
+    has_more = (offset + len(items)) < total
+
+    return {
+        "items": items,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "has_more": has_more,
+    }
 
 if __name__ == "__main__":
     import uvicorn

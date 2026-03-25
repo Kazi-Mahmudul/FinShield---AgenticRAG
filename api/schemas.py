@@ -38,3 +38,18 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     user_id: str
+
+
+class ChatHistoryItem(BaseModel):
+    id: str
+    role: str
+    content: str
+    created_at: datetime
+
+
+class ChatHistoryResponse(BaseModel):
+    items: list[ChatHistoryItem]
+    total: int
+    limit: int
+    offset: int
+    has_more: bool
