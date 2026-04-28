@@ -1,0 +1,7 @@
+Data/
+*.csv
+requirements-api.txt
+readme.md
+.env
+.gitignore
+.venv/

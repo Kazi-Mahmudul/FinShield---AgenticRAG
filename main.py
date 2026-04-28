@@ -11,11 +11,11 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 from jose import JWTError, jwt
 from langchain_core.messages import HumanMessage
-from api import schemas
+import schemas
 from Agent.agent import app as agent_graph
 
 # Import your utility functions
-from api.auth_utils import verify_password, create_access_token, SECRET_KEY, ALGORITHM
+from auth_utils import verify_password, create_access_token, SECRET_KEY, ALGORITHM
 
 load_dotenv()
 
