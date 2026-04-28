@@ -5,6 +5,7 @@ langchain-community
 langgraph
 mistralai
 langchain-mistralai
+google-genai
 
 # --- Vector & NLP (BGE-M3 Multilingual) ---
 sentence-transformers
@@ -12,16 +13,14 @@ FlagEmbedding
 torch
 numpy
 
-# --- Data Tiers (SQL & Graph) ---
+# --- Data Tiers (SQL & Graph via Supabase) ---
 supabase
 psycopg2-binary
-neo4j
 upstash-redis
 
 # --- Backend & API ---
 fastapi
 uvicorn
-python
 python-multipart
 pydantic
 pydantic-settings

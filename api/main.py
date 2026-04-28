@@ -270,7 +270,7 @@ async def chat_with_agent(body: schemas.ChatRequest, token: str = Depends(oauth2
 
             if msg_type == "tool":
                 lowered = msg_content.lower()
-                if "error:" in lowered or "database error" in lowered or "graph error" in lowered:
+                if "error:" in lowered or "database error" in lowered or "fraud analysis error" in lowered:
                     tool_errors.append(msg_content)
 
             if getattr(last_msg, "type", None) == "ai" and getattr(last_msg, "content", None):

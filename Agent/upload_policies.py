@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from supabase import create_client
-from google import genai  # Modern library
+import google.genai as genai  # Modern library
 from google.genai import types
 
 load_dotenv()
