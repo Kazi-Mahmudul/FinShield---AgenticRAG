@@ -21,6 +21,7 @@ env/
 *.csv
 *.json
 !data_schema.json  # Example: Keep schema but ignore data
+!vercel.json
 
 # --- Secret Keys (CRITICAL) ---
 .env
