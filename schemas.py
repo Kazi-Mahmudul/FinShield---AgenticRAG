@@ -31,6 +31,11 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, max_length=72)
 
 
+class SimpleLoginRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    phone: str = Field(..., pattern=r"^\d{11}$")
+
+
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
 

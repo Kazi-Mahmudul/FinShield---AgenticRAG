@@ -24,6 +24,7 @@ env/
 
 # --- Secret Keys (CRITICAL) ---
 .env
+.env.local
 credentials.txt
 *-credentials.json
 

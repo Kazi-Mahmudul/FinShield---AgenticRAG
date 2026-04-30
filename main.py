@@ -213,6 +213,32 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     
     return {"access_token": access_token, "token_type": "bearer"}
 
+@app.post("/auth/login", response_model=schemas.Token)
+async def simple_login(body: schemas.SimpleLoginRequest):
+    """
+    Simple login endpoint using name + phone number.
+    No password required — matches name and phone against the 'users' table.
+    """
+    query = (
+        supabase.table("users")
+        .select("*")
+        .eq("phone", body.phone)
+        .eq("name", body.name)
+        .execute()
+    )
+    user = query.data[0] if query.data else None
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No account found with that name and phone number",
+        )
+
+    access_token = create_access_token(
+        data={"sub": user["phone"], "user_id": user["user_id"]}
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
 @app.get("/api/v1/verify-session")
 async def verify_session(token: str = Depends(oauth2_scheme)):
     """
