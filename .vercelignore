@@ -2,6 +2,9 @@ Data/
 *.csv
 requirements-api.txt
 readme.md
-.env
-.gitignore
+/.env
+/.gitignore
 .venv/
+__pycache__/
+Agent/
+*.py
