@@ -65,6 +65,28 @@ Present numbers in clear tables or bullet lists where helpful.
 class AgentState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
+# Token optimization settings
+MAX_MESSAGES_IN_CONTEXT = int(os.getenv("MAX_MESSAGES_IN_CONTEXT", "10"))
+ENABLE_TOKEN_OPTIMIZATION = os.getenv("ENABLE_TOKEN_OPTIMIZATION", "true").lower() == "true"
+
+
+def _optimize_message_context(messages: list[BaseMessage]) -> list[BaseMessage]:
+    """
+    Optimize message context by trimming old messages to reduce token usage.
+    Keeps the most recent MAX_MESSAGES_IN_CONTEXT messages.
+    """
+    if not ENABLE_TOKEN_OPTIMIZATION or len(messages) <= MAX_MESSAGES_IN_CONTEXT:
+        return messages
+    
+    # Keep system message and recent messages only
+    system_msgs = [m for m in messages if isinstance(m, SystemMessage)]
+    other_msgs = [m for m in messages if not isinstance(m, SystemMessage)]
+    
+    # Keep only the most recent messages
+    trimmed = other_msgs[-MAX_MESSAGES_IN_CONTEXT:]
+    return system_msgs + trimmed
+
+
 # Initialize Brain
 llm = ChatMistralAI(model="mistral-large-latest", temperature=0)
 tools = [query_transaction_history, check_fraud_connections, query_banking_policies]
@@ -72,7 +94,11 @@ llm_with_tools = llm.bind_tools(tools)
 
 def assistant(state: AgentState):
     print("\n🧠 FinShield is reasoning...")
-    messages = [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
+    
+    # Optimize context to reduce token usage
+    optimized_messages = _optimize_message_context(state["messages"])
+    
+    messages = [SystemMessage(content=SYSTEM_PROMPT)] + optimized_messages
     response = llm_with_tools.invoke(messages)
     return {"messages": [response]}
 

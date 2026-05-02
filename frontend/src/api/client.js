@@ -37,6 +37,9 @@ export const loginSimple = (name, phone) =>
 export const verifySession = () =>
   client.get('/api/v1/verify-session');
 
+export const logoutUser = () =>
+  client.post('/auth/logout');
+
 // ---------- User ----------
 export const getMyProfile = () =>
   client.get('/users/me');

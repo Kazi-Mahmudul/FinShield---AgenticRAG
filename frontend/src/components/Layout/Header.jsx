@@ -1,16 +1,25 @@
-import { Menu, Sun, Moon } from 'lucide-react';
+import { useState } from 'react';
+import { Menu, Sun, Moon, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useChat } from '../../context/ChatContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Header({ onMenuClick, title = 'FinShield Agent' }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { stats } = useChat();
+  const navigate = useNavigate();
+  const [showMenu, setShowMenu] = useState(false);
 
   const initials = user?.name
     ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     : 'FS';
+
+  const handleLogout = async () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className={`sticky top-0 z-30 px-4 lg:px-6 py-3 flex items-center gap-4 border-b ${
@@ -69,9 +78,42 @@ export default function Header({ onMenuClick, title = 'FinShield Agent' }) {
         </div>
       </div>
 
-      {/* Avatar */}
-      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent-purple to-accent-cyan flex items-center justify-center text-white text-sm font-bold shadow-lg cursor-pointer">
-        {initials}
+      {/* Avatar Dropdown Menu */}
+      <div className="relative">
+        <button
+          onClick={() => setShowMenu(!showMenu)}
+          className="w-9 h-9 rounded-full bg-gradient-to-br from-accent-purple to-accent-cyan flex items-center justify-center text-white text-sm font-bold shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+        >
+          {initials}
+        </button>
+        
+        {showMenu && (
+          <div className={`absolute right-0 mt-2 w-48 rounded-xl shadow-2xl ${
+            theme === 'dark' ? 'bg-dark-800 border border-dark-600' : 'bg-white border border-gray-200'
+          }`}>
+            {user && (
+              <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-dark-600' : 'border-gray-200'}`}>
+                <p className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  {user.name}
+                </p>
+                <p className={`text-xs ${theme === 'dark' ? 'text-dark-400' : 'text-gray-500'}`}>
+                  {user.phone}
+                </p>
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className={`w-full text-left px-4 py-2.5 flex items-center gap-2 transition-colors ${
+                theme === 'dark'
+                  ? 'hover:bg-dark-700 text-dark-200'
+                  : 'hover:bg-gray-50 text-gray-700'
+              }`}
+            >
+              <LogOut className="w-4 h-4 text-accent-red" />
+              <span>Logout</span>
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

@@ -13,6 +13,8 @@ from jose import JWTError, jwt
 from langchain_core.messages import HumanMessage
 import schemas
 from Agent.agent import app as agent_graph
+import hashlib
+import json
 
 # Import your utility functions
 from auth_utils import verify_password, create_access_token, SECRET_KEY, ALGORITHM
@@ -48,10 +50,39 @@ RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
 _rate_limit_store: dict[str, Deque[float]] = defaultdict(deque)
 _rate_limit_lock = Lock()
 
+# Response caching for chat queries (TTL-based cache)
+CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "300"))  # 5 minutes default
+_response_cache: dict[str, tuple[str, float]] = {}
+_cache_lock = Lock()
+
 
 def _rate_limit_key(request: Request) -> str:
     client_ip = request.client.host if request.client else "unknown"
     return f"{client_ip}:{request.url.path}"
+
+
+def _cache_key(user_id: str, message: str) -> str:
+    """Generate a cache key from user_id and message hash."""
+    msg_hash = hashlib.sha256(message.encode()).hexdigest()[:16]
+    return f"{user_id}:{msg_hash}"
+
+
+def _get_cached_response(key: str) -> str | None:
+    """Get cached response if valid (not expired)."""
+    with _cache_lock:
+        if key in _response_cache:
+            response, timestamp = _response_cache[key]
+            if time.time() - timestamp < CACHE_TTL_SECONDS:
+                return response
+            else:
+                del _response_cache[key]
+    return None
+
+
+def _cache_response(key: str, response: str) -> None:
+    """Cache a response with current timestamp."""
+    with _cache_lock:
+        _response_cache[key] = (response, time.time())
 
 
 @app.middleware("http")
@@ -251,6 +282,22 @@ async def verify_session(token: str = Depends(oauth2_scheme)):
     }
 
 
+@app.post("/auth/logout")
+async def logout(token: str = Depends(oauth2_scheme)):
+    """
+    Logout endpoint. Invalidates session on the client side.
+    Server-side stateless logout - client clears token and auth data.
+    """
+    payload = decode_bearer_token(token)
+    user_id: str = payload["user_id"]
+    
+    return {
+        "success": True,
+        "message": "Successfully logged out",
+        "user_id": user_id
+    }
+
+
 @app.get("/users/me", response_model=schemas.UserOut)
 async def get_my_profile(token: str = Depends(oauth2_scheme)):
     payload = decode_bearer_token(token)
@@ -276,6 +323,12 @@ async def get_my_profile(token: str = Depends(oauth2_scheme)):
 async def chat_with_agent(body: schemas.ChatRequest, token: str = Depends(oauth2_scheme)):
     payload = decode_bearer_token(token)
     user_id: str = payload["user_id"]
+
+    # Check cache first
+    cache_key = _cache_key(user_id, body.message)
+    cached_reply = _get_cached_response(cache_key)
+    if cached_reply:
+        return {"reply": cached_reply, "user_id": user_id, "cached": True}
 
     # Persist user message first so each turn is stored by user_id.
     save_chat_message(user_id=user_id, role="user", content=body.message)
@@ -314,6 +367,9 @@ async def chat_with_agent(body: schemas.ChatRequest, token: str = Depends(oauth2
         raise AgentExecutionError("Agent returned an empty response")
 
     save_chat_message(user_id=user_id, role="assistant", content=final_reply)
+    
+    # Cache the response
+    _cache_response(cache_key, final_reply)
 
     return {"reply": final_reply, "user_id": user_id}
 

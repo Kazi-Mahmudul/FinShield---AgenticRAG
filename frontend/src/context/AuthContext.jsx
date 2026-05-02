@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { loginSimple, verifySession, getMyProfile } from '../api/client';
+import { loginSimple, verifySession, getMyProfile, logoutUser } from '../api/client';
 
 const AuthContext = createContext(null);
 
@@ -59,13 +59,21 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const logout = () => {
-    sessionStorage.removeItem('finshield_token');
-    sessionStorage.removeItem('finshield_user');
-    sessionStorage.removeItem('finshield_messages');
-    sessionStorage.removeItem('finshield_stats');
-    setToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      // Call logout endpoint for audit/cleanup on server
+      await logoutUser();
+    } catch {
+      // Logout endpoint may fail, but we still clear client-side
+    } finally {
+      // Clear all session data
+      sessionStorage.removeItem('finshield_token');
+      sessionStorage.removeItem('finshield_user');
+      sessionStorage.removeItem('finshield_messages');
+      sessionStorage.removeItem('finshield_stats');
+      setToken(null);
+      setUser(null);
+    }
   };
 
   return (

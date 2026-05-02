@@ -43,6 +43,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     user_id: str
+    cached: Optional[bool] = False
 
 
 class ChatHistoryItem(BaseModel):
