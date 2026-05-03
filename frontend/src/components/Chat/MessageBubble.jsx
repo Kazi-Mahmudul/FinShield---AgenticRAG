@@ -7,35 +7,28 @@ export default function MessageBubble({ message, index }) {
   const isUser = message.role === 'user';
   const isError = message.content.startsWith('⚠️');
 
-  // Format content: bold text between ** **, highlight risk scores
+  const normalizeContent = (text) => {
+    return text
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`+/g, '')
+      .replace(/^#+\s*/gm, '')
+      .replace(/^\s*[-*+]\s+/gm, '• ')
+      .replace(/\|/g, ' ')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/^[>\s]+/gm, '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{2,}/g, '\n')
+      .trim();
+  };
+
   const formatContent = (text) => {
-    // Split by **bold** markers
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        const inner = part.slice(2, -2);
-        // Check if it's a risk-related bold text
-        if (inner.toLowerCase().includes('fraud') || inner.toLowerCase().includes('risk')) {
-          return <span key={i} className="font-bold text-accent-orange">{inner}</span>;
-        }
-        return <span key={i} className="font-bold text-accent-purple-light">{inner}</span>;
-      }
-      // Highlight risk scores like (Risk Score: 0.85/1)
-      const scored = part.replace(
-        /\(Risk Score:\s*([\d.]+)\/[\d.]+\)/gi,
-        (match) => `⚡${match}⚡`
-      );
-      if (scored.includes('⚡')) {
-        const scoreParts = scored.split('⚡');
-        return scoreParts.map((sp, j) => {
-          if (sp.match(/\(Risk Score:/i)) {
-            return <span key={`${i}-${j}`} className="text-accent-orange font-semibold">{sp}</span>;
-          }
-          return sp;
-        });
-      }
-      return part;
-    });
+    const normalized = normalizeContent(text);
+    return normalized.split('\n').map((line, index) => (
+      <div key={index} className="break-words">
+        {line}
+      </div>
+    ));
   };
 
   return (
@@ -55,7 +48,7 @@ export default function MessageBubble({ message, index }) {
       )}
 
       <div
-        className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+        className={`max-w-[90%] lg:max-w-[82%] rounded-2xl px-4 py-2 text-sm leading-snug ${
           isUser
             ? theme === 'dark'
               ? 'bg-dark-600 text-white rounded-br-md'

@@ -23,7 +23,7 @@ export default function ChatInput({ onSend, isLoading, settings }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`border-t px-4 py-3 ${
+    <form onSubmit={handleSubmit} className={`border-t px-4 py-2 ${
       theme === 'dark' ? 'border-dark-700/50 bg-dark-900/50' : 'border-gray-200 bg-white/50'
     }`}>
       <div className={`flex items-center gap-3 rounded-2xl px-4 py-2 transition-all duration-300 ${
@@ -39,7 +39,7 @@ export default function ChatInput({ onSend, isLoading, settings }) {
           onKeyDown={handleKeyDown}
           placeholder='Ask FinShield: "Is this transaction legitimate?"'
           disabled={isLoading}
-          className={`flex-1 bg-transparent outline-none text-sm placeholder-opacity-60 ${
+          className={`flex-1 bg-transparent outline-none text-base placeholder-opacity-60 ${
             theme === 'dark'
               ? 'text-white placeholder-dark-400'
               : 'text-gray-900 placeholder-gray-400'

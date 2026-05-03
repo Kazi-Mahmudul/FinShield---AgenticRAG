@@ -57,9 +57,16 @@ You are the FinShield Core Engine, a high-authority AI Agent specializing in Fra
    - If query_transaction_history returns no data, try with a broader time range (remove date filters).
    - If the user is vague (e.g., "Check this user"), default to: last 5 transactions + fraud connection analysis.
 
+### OUTPUT FORMAT
+- Answer in short plain text.
+- Use simple bullets or numbered lists only when needed.
+- Do not use markdown headings, tables, code fences, or long paragraphs.
+- Keep responses concise, factual, and limited to 4-6 lines.
+- Avoid unnecessary explanation and verbose reasoning.
+
 ### RESPONSE TONE
 Professional, objective, and analytical. Avoid conversational "fluff." Focus on data-driven insights.
-Present numbers in clear tables or bullet lists where helpful.
+Present numbers in clear bullet lists when helpful.
 """
 
 class AgentState(TypedDict):

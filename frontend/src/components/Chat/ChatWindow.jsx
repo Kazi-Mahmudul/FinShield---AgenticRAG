@@ -30,9 +30,9 @@ export default function ChatWindow() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 space-y-4 w-full max-w-[1400px] mx-auto">
         {messages.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
